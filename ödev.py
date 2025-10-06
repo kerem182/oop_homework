@@ -75,7 +75,7 @@ class Magazine(LibraryItem):
 class EBook(LibraryItem):
     def __init__(self, title, author, file_size, item_id):
         super().__init__(title, author, item_id)
-        self.file_size = file_size  # in MB
+        self.file_size = file_size  
 
     def borrow(self):
         if not self._is_borrowed:
@@ -94,7 +94,6 @@ class EBook(LibraryItem):
     def info(self):
         return f"[EBook] {self.title} by {self.author}, File size: {self.file_size} MB."
 
-# items listesi EBook sınıfının DIŞINDA olmalı
 items = [
     Book("1984", "George Orwell", 328, 1),
     Magazine("National Geographic", "Various", "September 2025", 2),
@@ -105,4 +104,5 @@ for item in items:
     print(item.info())
     print(item.borrow())
     print(item.return_item())
+
     print("---")
