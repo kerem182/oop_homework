@@ -1,20 +1,14 @@
 from abc import ABC, abstractmethod
 
 class LibraryItem(ABC):
+    total_items = 0  
+
     def __init__(self, title, author, item_id):
         self.title = title
         self.author = author
-        self.__item_id = item_id
-        self._is_borrowed = False
-
-    def get_item_id(self):
-        return self.__item_id
-
-    def set_item_id(self, new_id):
-        if new_id > 0:
-            self.__item_id = new_id
-        else:
-            raise ValueError("Item ID must be positive")
+        self.__item_id = item_id   
+        self._is_borrowed = False  
+        LibraryItem.total_items += 1
 
     @abstractmethod
     def borrow(self):
@@ -27,6 +21,15 @@ class LibraryItem(ABC):
     @abstractmethod
     def info(self):
         pass
+
+    def __eq__(self, other):
+        if not isinstance(other, LibraryItem):
+            return NotImplemented
+        return self.__item_id == other.__item_id
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}: {self.title}>"
+
 
 class Book(LibraryItem):
     def __init__(self, title, author, pages, item_id):
@@ -36,19 +39,18 @@ class Book(LibraryItem):
     def borrow(self):
         if not self._is_borrowed:
             self._is_borrowed = True
-            return f"Book '{self.title}' has been borrowed."
-        else:
-            return f"Book '{self.title}' is already borrowed."
+            return f"Book '{self.title}' borrowed."
+        return f"Book '{self.title}' already borrowed."
 
     def return_item(self):
         if self._is_borrowed:
             self._is_borrowed = False
-            return f"Book '{self.title}' has been returned."
-        else:
-            return f"Book '{self.title}' was not borrowed."
+            return f"Book '{self.title}' returned."
+        return f"Book '{self.title}' was not borrowed."
 
     def info(self):
         return f"[Book] {self.title} by {self.author}, {self.pages} pages."
+
 
 class Magazine(LibraryItem):
     def __init__(self, title, author, issue, item_id):
@@ -59,18 +61,17 @@ class Magazine(LibraryItem):
         if not self._is_borrowed:
             self._is_borrowed = True
             return f"Magazine '{self.title}' Issue {self.issue} borrowed."
-        else:
-            return f"Magazine '{self.title}' is already borrowed."
+        return f"Magazine '{self.title}' already borrowed."
 
     def return_item(self):
         if self._is_borrowed:
             self._is_borrowed = False
             return f"Magazine '{self.title}' Issue {self.issue} returned."
-        else:
-            return f"Magazine '{self.title}' was not borrowed."
+        return f"Magazine '{self.title}' was not borrowed."
 
     def info(self):
-        return f"[Magazine] {self.title} by {self.author}, Issue {self.issue}."
+        return f"[Magazine] {self.title}, Issue {self.issue}."
+
 
 class EBook(LibraryItem):
     def __init__(self, title, author, file_size, item_id):
@@ -81,28 +82,108 @@ class EBook(LibraryItem):
         if not self._is_borrowed:
             self._is_borrowed = True
             return f"EBook '{self.title}' has been downloaded."
-        else:
-            return f"EBook '{self.title}' is already borrowed."
+        return f"EBook '{self.title}' is already borrowed."
 
     def return_item(self):
         if self._is_borrowed:
             self._is_borrowed = False
-            return f"EBook '{self.title}' license has been released."
-        else:
-            return f"EBook '{self.title}' was not borrowed."
+            return f"EBook '{self.title}' license released."
+        return f"EBook '{self.title}' was not borrowed."
 
     def info(self):
         return f"[EBook] {self.title} by {self.author}, File size: {self.file_size} MB."
 
-items = [
-    Book("1984", "George Orwell", 328, 1),
-    Magazine("National Geographic", "Various", "September 2025", 2),
-    EBook("Python Programming", "John Doe", 5, 3)
-]
 
-for item in items:
-    print(item.info())
-    print(item.borrow())
-    print(item.return_item())
+class Librarian:
+    def __init__(self, name):
+        self.name = name
 
-    print("---")
+    def lend_item(self, item: LibraryItem):
+        print(f"{self.name} lends out {item.title}.")
+        return item.borrow()
+
+    def receive_item(self, item: LibraryItem):
+        print(f"{self.name} receives {item.title}.")
+        return item.return_item()
+
+
+class Library:
+    def __init__(self):
+        self.items = []  
+        self.librarian = None  
+        self.report = LibraryReport(self)  
+
+    def assign_librarian(self, librarian: Librarian):
+        self.librarian = librarian
+        print(f"Librarian {librarian.name} assigned to library.")
+
+    def add_item(self, item):
+        """Overloading-like behavior (different item types)"""
+        if isinstance(item, Book):
+            print(f"Added Book: {item.title}")
+        elif isinstance(item, Magazine):
+            print(f"Added Magazine: {item.title}")
+        elif isinstance(item, EBook):
+            print(f"Added EBook: {item.title}")
+        else:
+            print(f"Unsupported item type: {type(item)}")
+            return
+        self.items.append(item)
+
+    def show_all(self):
+        print("\nLibrary Collection:")
+        for i in self.items:
+            print("  -", i.info())
+
+    def show_report(self):
+        print("\n--- Library Report ---")
+        print(self.report.generate_report())
+
+
+class LibraryReport:
+    def __init__(self, library):
+        self.library = library 
+
+    def generate_report(self):
+        total = len(self.library.items)
+        borrowed = sum(1 for i in self.library.items if i._is_borrowed)
+        return f"Total: {total}, Borrowed: {borrowed}, Available: {total - borrowed}"
+
+class Notifier:
+    def notify(self, *messages, prefix="[INFO]"):
+        """Simulates method overloading using variable args and default values."""
+        for msg in messages:
+            print(f"{prefix} {msg}")
+
+if __name__ == "__main__":
+
+    book = Book("1984", "George Orwell", 328, 1)
+    magazine = Magazine("National Geographic", "Various", "Sep 2025", 2)
+    ebook = EBook("Python Programming", "John Doe", 5, 3)
+
+    library = Library()
+    library.add_item(book)
+    library.add_item(magazine)
+    library.add_item(ebook)
+    library.show_all()
+
+    librarian = Librarian("Kerem Salih Erol")
+    library.assign_librarian(librarian)
+
+    print("\nBorrow/Return transactions:")
+    print(librarian.lend_item(book))
+    print(librarian.receive_item(book))
+    print(librarian.lend_item(ebook))
+    print(librarian.receive_item(ebook))
+
+    another_book = Book("1984 Copy", "Unknown", 200, 1)
+    print("\n--- Operator Overloading Test (==) ---")
+    result = "SAME " if book == another_book else "NOT SAME"
+    print(f"{book.title}  ↔  {another_book.title}  -->  {result}")
+
+    library.show_report()
+
+    print("\n--- Method Overloading Demo ---")
+    notifier = Notifier()
+    notifier.notify("Library updated", "3 new items added")
+    notifier.notify("System maintenance scheduled!", prefix="[WARNING]")
